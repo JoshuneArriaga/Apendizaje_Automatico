@@ -1,0 +1,189 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx} 
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{natbib}
+
+
+\title{\textbf{Identificación de Patrones de Riesgo en Salud Neonatal mediante Clustering Basado en Densidad}}
+\author{
+    Joshune Juditht Arriaga Gómez\\
+    \small Universidad Autónoma de Nuevo León \\ \small Facultad de Ciencias Físico Matemáticas
+}
+\date{Octubre 2025}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Introducción}
+
+El análisis del bienestar infantil mediante datos clínicos tempranos permite identificar factores de riesgo y patrones en la salud de los recién nacidos. En este trabajo se aplican técnicas de \textbf{aprendizaje no supervisado}, específicamente el algoritmo \emph{DBSCAN} (Density-Based Spatial Clustering of Applications with Noise), para detectar estructuras subyacentes en un conjunto de datos sobre salud neonatal. 
+
+El dataset utilizado contiene información de 3000 registros de bebés con 25 variables fisiológicas y clínicas, tales como peso, edad gestacional, frecuencia cardíaca, saturación de oxígeno y niveles de ictericia. El objetivo es poder explorar si es posible agrupar a los bebés según su condición de salud y evaluar si los patrones hallados corresponden con distintos niveles de riesgo.
+
+\section{Descripción de los datos}
+
+El conjunto de datos proviene de la base publica \emph{Infant Wellness and Risk Evaluation Dataset} disponible en Kaggle. Contiene atributos tanto numéricos como categóricos, incluyendo:
+
+\begin{itemize}
+\item Edad gestacional (semanas)
+\item Peso y talla al nacer
+\item Temperatura corporal
+\item Frecuencia cardiaca y respiratoria
+\item Saturación de oxígeno
+\item Tipo de alimentación y frecuencia
+\item Nivel de ictericia (mg/dL)
+\item Puntuación Apgar (Puntuación de salud del recién nacido según el peso al nacer)
+\item Nivel de riesgo (bajo, medio, alto)
+\end{itemize}
+
+Se aplicaron transformaciones previas como relleno de valores faltantes mediante \emph{forward} y \emph{backward filling}, estandarización de variables numéricas con \emph{StandardScaler}, y codificación de variables categóricas con \emph{LabelEncoder}.
+
+\section{Antecedentes}
+El uso de técnicas de agrupamiento (clustering) en la medicina neonatal y pediátrica ha demostrado ser una herramienta valiosa para la estratificación de riesgos y la identificación de fenotipos clínicos para objetivos de pronósticos y terapéuticos.
+
+Diversos trabajos han empleado técnicas de agrupamiento en medicina neonatal. Por ejemplo,\emph{Helman}\cite{helman2025} señalaron la utilidad de métodos de agrupamiento avanzados de machine learning no supervisados para identificar subgrupos de riesgo en poblaciones pediátricas con defectos del corazón. Otros estudios, como los publicados en \emph{The Lancet Child \& Adolescent Health} \cite{thelancet2020}, destacan la importancia de la detección temprana de patrones para el diágnostico oprtuno de epilepsia. Investigaciones como MacBean et al. $\cite{macbean2018}$ revelan la asociación entre patrones de crecimiento alterados en el periodo neonatal y resultados adversos a largo plazo en bebés prematuros, sugiriendo la potencial utilidad de las técnicas de agrupamiento para clasificar a los lactantes según su trayectoria de crecimiento.
+
+\section{Metodología}
+\subsection{Algortimo No Supervisado y métricas}
+Se aplicó el algoritmo \textbf{DBSCAN}, que define clústeres como regiones de alta densidad separadas por áreas de baja densidad. Formalmente, para un punto $p_i$, el conjunto de vecinos $\mathcal{N}_\epsilon(p_i)$ se define como:
+
+\[
+\mathcal{N}_\epsilon(p_i) = \{ p_j \in D \ | \ \text{dist}(p_i, p_j) \leq \epsilon \}
+\]
+
+donde $\epsilon$ es el radio máximo de vecindad. Si $|\mathcal{N}_\epsilon(p_i)| \geq \text{minPts}$, el punto se considera un \emph{núcleo}. Los clústeres se expanden conectando puntos núcleo adyacentes, mientras que los puntos que no pertenecen a ningún clúster se clasifican como \emph{ruido}.
+
+Los parámetros $\epsilon$ y \textit{minPts} se determinaron mediante el método del \emph{k-dist graph} usando \emph{Nearest Neighbors}, observando el punto de inflexión en la curva de distancias promedio.
+
+Posteriormente se evaluó la calidad del agrupamiento con tres métricas:
+\begin{itemize}
+\item \textbf{Coeficiente de Silhouette} ($S$): mide qué tan separados están los grupos.
+\item \textbf{Índice de Davies-Bouldin} (DBI): valores más bajos indican clústeres bien definidos.
+\item \textbf{Índice de Calinski-Harabasz} (CHI): valores altos reflejan mayor dispersión intergrupo.
+\end{itemize}
+
+Para visualización, se utilizó \emph{PCA} (Análisis de Componentes Principales) reduciendo la dimensionalidad a dos componentes principales.
+
+\subsection{Preprocesamiento y selección de variables}
+Dado el número de variables y la necesidad de visualización, se aplicó \textbf{Análisis de Componentes Principales (PCA)}. Este método transforma las variables originales en un nuevo conjunto de variables no correlacionadas (componentes principales) que capturan la mayor varianza posible de los datos.
+
+El análisis de varianza explicada reveló que:
+\begin{itemize}
+\item Las primeras 2 componentes explican aproximadamente el 26\% de la varianza total (PC1: 13.05\%, PC2: 12.68\%)
+\item Se requieren 12 componentes para explicar el 90\% de la varianza total
+\end{itemize}
+
+Del conjunto inicial de 25 variables, se seleccionaron solo 12 variables numericas relevantes para el análisis:
+
+\begin{itemize}
+\item Variables perinatales: edad gestacional, peso al nacer, talla al nacer, circunferencia cefálica al nacer
+\item Variables de seguimiento: edad en días, peso actual, talla actual, circunferencia cefálica actual
+\item Variables fisiológicas: frecuencia cardíaca, producción de orina
+\item Indicadores clínicos: nivel de ictericia, puntuación Apgar
+\end{itemize}
+
+Todas las variables fueron estandarizadas mediante \emph{StandardScaler} para asegurar que ninguna variable dominara el análisis debido a su escala.
+
+\section{Resultados}
+\subsection{Análisis de componentes principales}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1.0\textwidth]{pca comp.png}
+\caption{Análisis de componentes principales. Izquierda: \emph{Scree plot} mostrando la varianza explicada por cada componente. Derecha: \emph{Biplot} de loadings de las variables en PC1 y PC2.}
+\label{fig:pca comp}
+\end{figure}
+
+La Figura \ref{fig:pca comp} muestra el \emph{scree plot} y el \emph{biplot} de loadings. El \emph{scree plot} revela que la primera componente principal (PC1) explica el 13.05\% de la varianza, mientras que PC2 explica el 12.68\%. La varianza explicada decrece gradualmente, requiriendo 12 componentes para alcanzar el 90\% de la varianza acumulada. Esta distribución relativamente uniforme de la varianza entre múltiples componentes indica que los datos de salud neonatal son inherentemente multidimensionales, sin que exista un único factor dominante.
+
+En el \emph{biplot} de loadings se observa que:
+\begin{itemize}
+\item Las variables como peso al nacer (\texttt{birth\_weight\_kg}), talla al nacer (\texttt{birth\_length\_cm}) y circunferencia cefálica al nacer (\texttt{birth\_head\_circumference\_cm}) se agrupan en el cuadrante superior derecho, indicando alta correlación positiva con ambas componentes principales
+\item La edad gestacional (\texttt{gestational\_age\_weeks}) muestra una contribución importante hacia PC2
+\item El nivel de ictericia (\texttt{jaundice\_level\_mg\_dl}) aparece con carga negativa en PC2, sugiriendo una relación inversa con la edad gestacional
+\end{itemize}
+
+
+\subsection{Agrupamiento con DBSCAN}
+
+El modelo DBSCAN logró detectar grupos con distinta densidad en los datos. Con los parámetros optimizados ($\epsilon = 2.4491$ y $\text{minPts} = 10$), se identificaron dos clústeres principales y un pequeño conjunto de puntos clasificados como ruido, aproximadamente 0.53\% de los datos.
+
+Las métricas obtenidas fueron:
+
+\begin{table}[h]
+\caption{Evaluación del modelo DBSCAN.}
+\centering
+\begin{tabular}{|l|r|p{6cm}|}
+\hline
+\textbf{Métrica} & \textbf{Valor} & \textbf{Interpretación} \\ \hline \hline
+Silhouette Score & 0.1860 & Separación moderada entre clústeres \\ \hline
+Davies-Bouldin Index & 1.1460 &  Grupos definidos razonablemente\\ \hline
+Calinski-Harabasz Index & 46.36 & Dispersión entre grupos aceptable \\ \hline
+\end{tabular}
+\label{tab:metricas}
+\end{table}
+
+El coeficiente de Silhouette de 0.186 sugiere una separación moderada entre los clústeres, algo esperable en datos médicos donde las diferencias entre grupos de riesgo suelen ser sutiles. Por su parte, el índice Davies-Bouldin de 1.146 respalda esta interpretación, indicando que los clústeres presentan una definición razonablemente adecuada.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{pca.png}
+\caption{Visualización de clústeres obtenidos con DBSCAN proyectados en el espacio de las dos primeras componentes principales.}
+\label{fig:clusters}
+\end{figure}
+
+En la Figura \ref{fig:clusters}, se observa la distribución de los clústeres obtenidos tras la proyección con PCA. La visualización revela:
+
+\begin{itemize}
+\item Una concentración de puntos de bajo riesgo (verde) en la región inferior izquierda, correspondiente a valores bajos en ambas componentes principales
+\item Una dispersión mayor de puntos de alto riesgo (rojo) en las regiones superior y derecha del gráfico
+\item Presencia de puntos aislados clasificados como ruido, que corresponden a casos atípicos con combinaciones inusuales de características
+\end{itemize}
+
+El análisis muestra que existe una correspondencia moderada entre los clústeres identificados por DBSCAN y los niveles de riesgo reales. El clúster de mayor densidad concentra principalmente casos de bajo riesgo, mientras que los casos de alto riesgo tienden a estar más dispersos o en regiones de menor densidad.
+
+
+\section{Conclusiones y discusión}
+
+Al usar DBSCAN me permitió descubrir subgrupos dentro del conjunto de datos, sin requerir especificar el número de clústeres. A diferencia de algoritmos como K-Means, DBSCAN maneja bien la presencia de ruido y datos no lineales, lo cual es útil para contextos médicos donde las variables fisiológicas pueden presentar alta variabilidad.
+
+La combinación de métricas (Silhouette, Davies-Bouldin y Calinski-Harabasz) brindó una evaluación integral de la coherencia de los grupos. Los resultados sugieren que la estructura encontrada refleja posibles perfiles de riesgo clínico, lo que podría servir para futuros modelos predictivos en neonatología.
+
+
+\bibliographystyle{abbrvnat}
+\begin{thebibliography}{99}
+
+\bibitem{helman2025}
+Helman SM, Riek NT, Sereika SM, Tafti AP, Olsen R, Gaynor JW, Lisanti AJ,
+Al-Zaiti SS,\emph {Exploring Novel Data-Driven Clustering Methods for Uncovering Patterns in Longitudinal
+Neonatal Postoperative Temperature Measurements Mayo Clinic Proceedings: Digital Health (2025)},
+doi: https://doi.org/10.1016/j.mcpdig.2025.100270.
+
+
+\bibitem{thelancet2020}
+\emph{A machine-learning algorithm for neonatal seizure recognition: a multicentre, randomised, controlled trial}
+Pavel, Andreea M et al.
+The Lancet Child & Adolescent Health, Volume 4, Issue 10, 740 - 749
+
+\bibitem{macbean2018}
+MacBean V, Lunt A, Drysdale SB, Yarzi MN, Rafferty GF, Greenough A. Predicting healthcare outcomes in prematurely born infants using cluster analysis. Pediatr Pulmonol. 2018 Aug;53(8):1067-1072. doi: 10.1002/ppul.24050. Epub 2018 May 23. PMID: 29790677.
+
+\bibitem{domino2023}
+Domino Data Lab. \emph{Topology and Density-Based Clustering}. Recuperado de:
+\texttt{https://domino.ai/blog/topology-and-density-based-clustering} (consultado en 2025).
+
+\bibitem{arcgis2023}
+Esri. \emph{How Density-Based Clustering Works}. ArcGIS Pro Documentation.
+Disponible en: \texttt{https://pro.arcgis.com/es/pro-app/3.3/tool-reference/spatial-statistics/how-density-based-clustering-works.htm} (consultado en 2025).
+
+\bibitem{altaei2023}
+Raghda Altaei. \emph{Understand the Math Behind DBSCAN}.
+Medium (2023). Disponible en: \texttt{https://raghda-altaei.medium.com/understand-the-math-behind-dbscan-ae51672c0424} (consultado en 2025).
+
+
+\end{thebibliography}
+
+\end{document}
