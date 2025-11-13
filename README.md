@@ -9,3 +9,4 @@
 - [Tarea 5 (LaTeX)](https://github.com/JoshuneArriaga/Apendizaje_Automatico/blob/main/Tarea%205.tex)
 - [Tarea 5 (PDF)](https://github.com/JoshuneArriaga/Apendizaje_Automatico/blob/main/Tarea_5.pdf)
 - [Tarea 6](https://github.com/JoshuneArriaga/Apendizaje_Automatico/blob/main/Tarea_6.ipynb)
+- [Tarea 7](https://github.com/JoshuneArriaga/Apendizaje_Automatico/blob/main/Tarea_7.pdf)
