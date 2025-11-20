@@ -1,0 +1,713 @@
+\documentclass[twocolumn,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{natbib}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{geometry}
+\usepackage{multicol}
+\usepackage{titlesec}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{caption}
+
+% Márgenes estilo revista científica
+\geometry{
+    a4paper,
+    left=1.8cm,
+    right=1.8cm,
+    top=2.0cm,
+    bottom=2.0cm
+}
+
+% Estilo de títulos tipo paper
+\titleformat{\section}{\bfseries\large}{\thesection.}{1em}{}
+\titleformat{\subsection}{\bfseries\normalsize}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\bfseries\small}{\thesubsubsection}{1em}{}
+
+% Configuración de captions
+\captionsetup{font=small,labelfont=bf}
+
+% Encabezado del documento
+\title{\textbf{Identificación de Patrones de Riesgo en Salud Neonatal mediante Clustering Basado en Densidad y Clasificación Supervisada}}
+
+\author{
+    Joshune Juditht Arriaga Gómez\\
+    \small Universidad Autónoma de Nuevo León\\
+    \small Facultad de Ciencias Físico Matemáticas\\
+    \small \texttt{matrícula: 1853668}
+}
+
+\date{Noviembre 2025}
+
+\begin{document}
+
+\twocolumn[
+\maketitle
+\vspace{-1em}
+\begin{center}
+\textbf{Resumen.} 
+\small
+Este estudio aplica técnicas de aprendizaje no supervisado y supervisado —\emph{DBSCAN} y \emph{Random Forest}— para identificar patrones clínicos de riesgo en neonatos. Se analizan 3000 registros con 25 variables fisiológicas y clínicas, combinando reducción dimensional (PCA), agrupamiento basado en densidad y clasificación predictiva. El análisis de componentes principales reveló que 9 componentes explican el 70\% de la varianza total. \emph{DBSCAN} identificó 2 clusters principales con un coeficiente de Silhouette de 0.19. El modelo \emph{Random Forest} optimizado alcanzó una exactitud del 90.5\% en la predicción del nivel de riesgo neonatal, identificando la edad en días, frecuencia cardíaca y nivel de ictericia como las variables más determinantes.
+
+\vspace{0.5em}
+\textbf{Palabras clave:} Clustering DBSCAN, Random Forest, Salud Neonatal, Aprendizaje No Supervisado, PCA, Estratificación de Riesgo
+\end{center}
+\vspace{1em}
+]
+
+\section{Introducción}
+
+El análisis del bienestar infantil mediante datos clínicos tempranos permite identificar factores de riesgo y patrones en la salud de los recién nacidos. La detección temprana de condiciones adversas es fundamental para reducir la morbimortalidad neonatal y mejorar los resultados a largo plazo en esta población vulnerable \cite{helman2025}.
+
+En este trabajo se aplican técnicas tanto de \textbf{aprendizaje no supervisado} como de \textbf{aprendizaje supervisado}, específicamente el algoritmo \emph{DBSCAN} (Density-Based Spatial Clustering of Applications with Noise) y \emph{Random Forest}, para detectar estructuras subyacentes en un conjunto de datos sobre salud neonatal y desarrollar modelos predictivos robustos.
+
+El dataset utilizado contiene información de 3000 registros de bebés con 25 variables fisiológicas y clínicas, tales como peso, edad gestacional, frecuencia cardíaca, saturación de oxígeno y niveles de ictericia. El objetivo es explorar si es posible agrupar a los bebés según su condición de salud mediante clustering basado en densidad, y posteriormente evaluar si los patrones hallados corresponden con distintos niveles de riesgo mediante clasificación supervisada.
+
+\section{Descripción de los Datos}
+
+El conjunto de datos proviene de la base pública \emph{Infant Wellness and Risk Evaluation Dataset} disponible en Kaggle. Contiene $N=3000$ observaciones con atributos tanto numéricos como categóricos, incluyendo:
+
+\begin{itemize}
+    \item \textbf{Variables antropométricas}: Edad gestacional (semanas), peso al nacer (kg), talla (cm), circunferencia cefálica (cm)
+    \item \textbf{Signos vitales}: Temperatura corporal (°C), frecuencia cardiaca (bpm), frecuencia respiratoria (bpm), saturación de oxígeno (\%)
+    \item \textbf{Variables de alimentación}: Tipo de alimentación, frecuencia de alimentación por día
+    \item \textbf{Indicadores clínicos}: Nivel de ictericia (mg/dL), conteo de orina, conteo de deposiciones, reflejos normales, inmunizaciones
+    \item \textbf{Medidas de madurez}: Puntuación Apgar
+    \item \textbf{Variable objetivo}: Nivel de riesgo (categorías: ``At Risk'', ``Healthy'')
+\end{itemize}
+
+Se aplicaron transformaciones previas como imputación de valores faltantes mediante \emph{forward} y \emph{backward filling} en la variable \texttt{apgar\_score} agrupada por bebé, estandarización de variables numéricas con \emph{StandardScaler}, y codificación de variables categóricas con \emph{LabelEncoder}.
+
+\section{Antecedentes}
+
+El uso de técnicas de agrupamiento (clustering) en la medicina neonatal y pediátrica ha demostrado ser una herramienta valiosa para la estratificación de riesgos y la identificación de fenotipos clínicos para objetivos pronósticos y terapéuticos.
+
+Diversos trabajos han empleado técnicas de agrupamiento en medicina neonatal. Por ejemplo,\emph{Helman} \cite{helman2025} señalaron la utilidad de métodos de agrupamiento avanzados de machine learning no supervisado para identificar subgrupos de riesgo en poblaciones pediátricas con defectos del corazón, específicamente analizando patrones longitudinales de temperatura postoperatoria.
+
+Otros estudios, como los publicados en \emph{The Lancet Child \& Adolescent Health} \cite{thelancet2020}, destacan la importancia de la detección temprana de patrones para el diagnóstico oportuno de epilepsia neonatal mediante algoritmos de machine learning, demostrando que estos métodos pueden superar la detección humana en ensayos clínicos aleatorizados.
+
+Investigaciones como  \emph {MacBean} \cite{macbean2018} revelan la asociación entre patrones de crecimiento alterados en el periodo neonatal y resultados adversos a largo plazo en bebés prematuros, sugiriendo la potencial utilidad de las técnicas de agrupamiento para clasificar a los lactantes según su trayectoria de crecimiento y predecir complicaciones respiratorias.
+
+En cuanto a algoritmos de clasificación, Random Forest ha demostrado ser particularmente efectivo en contextos médicos debido a su capacidad para manejar datos de alta dimensionalidad, interacciones no lineales y proporcionar medidas de importancia de variables \cite{breiman2001random}.
+
+\section{Metodología}
+
+Este estudio adoptó un enfoque de análisis mixto que combina técnicas tanto de aprendizaje no supervisado como supervisado para identificar patrones de riesgo y desarrollar modelos de clasificación en salud neonatal. El análisis se estructuró en dos fases complementarias: exploración de patrones mediante clustering basado en densidad y clasificación de niveles de riesgo mediante ensamble de árboles de decisión.
+
+\subsection{Preprocesamiento de Datos}
+
+\subsubsection{Tratamiento de Valores Faltantes}
+
+La variable \texttt{apgar\_score} presentaba valores faltantes que fueron imputados mediante propagación hacia adelante (\emph{forward fill}) y hacia atrás (\emph{backward fill}) dentro de cada grupo de bebé identificado por \texttt{baby\_id}. Esta estrategia preserva la consistencia temporal de las mediciones dentro del mismo sujeto.
+
+Variables identificadoras no informativas (\texttt{baby\_id}, \texttt{date}, \texttt{name}) fueron excluidas del análisis para evitar sesgos.
+
+\subsubsection{Codificación de Variables Categóricas}
+
+Las variables categóricas (\texttt{gender}, \texttt{reflexes\_normal}, \texttt{feeding\_type}, \texttt{immunizations\_done}, \texttt{risk\_level}) fueron transformadas mediante \textbf{LabelEncoder}, asignando valores numéricos ordinales que permiten su inclusión en modelos de machine learning.
+
+La variable objetivo \texttt{risk\_level} fue codificada como:
+\begin{itemize}
+    \item $0$: ``At Risk'' (En Riesgo)
+    \item $1$: ``Healthy'' (Saludable)
+\end{itemize}
+
+La distribución de clases mostró desbalance: 2602 casos saludables (86.7\%) vs. 398 casos en riesgo (13.3\%).
+
+\subsubsection{Estandarización y Selección de Variables}
+
+Se aplicó \textbf{StandardScaler} a 17 variables numéricas seleccionadas. Esta transformación lineal convierte cada variable a una distribución con media cero y desviación estándar unitaria mediante la fórmula:
+\[
+z = \frac{x - \mu}{\sigma}
+\]
+donde $\mu$ es la media y $\sigma$ la desviación estándar. Esto garantiza que ninguna variable domine el análisis debido a diferencias de escala.
+
+\subsection{Análisis de Componentes Principales (PCA)}
+
+Para la visualización y análisis exploratorio se implementó \textbf{PCA}, una técnica de reducción dimensional que transforma las variables originales correlacionadas en un conjunto de componentes principales ortogonales que capturan la máxima varianza.
+
+El análisis reveló que:
+\begin{itemize}
+    \item Las primeras dos componentes explicaron el 25.73\% de la varianza total (PC1: 13.05\%, PC2: 12.68\%)
+    \item Son necesarias \textbf{9 componentes} para capturar el 70\% de la variabilidad
+    \item La quinta componente alcanza 51.41\% de varianza acumulada
+\end{itemize}
+
+Esta distribución relativamente uniforme indica que los datos de salud neonatal son inherentemente multidimensionales, sin que exista un único factor dominante.
+
+El análisis de \emph{loadings} identificó las variables con mayor peso en las primeras componentes principales (Tabla \ref{tab:loadings}). Con base en este análisis, se seleccionaron las 12 variables más importantes para el clustering subsecuente.
+
+\begin{table}[H]
+\centering
+\captionsetup{name=Tabla}
+\caption{Top 10 Variables con mayor importancia Total en PCA}
+\label{tab:loadings}
+\scriptsize
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Variable} & \textbf{PC1} & \textbf{PC2} & \textbf{PC3} & \textbf{Import. Total} \\
+\midrule
+birth\_weight\_kg & -0.205 & 0.504 & -0.098 & 1.432 \\
+birth\_length\_cm & 0.433 & 0.097 & 0.511 & 1.282 \\
+length\_cm & 0.447 & 0.176 & 0.501 & 1.272 \\
+birth\_head\_circum. & 0.504 & -0.033 & -0.456 & 1.228 \\
+weight\_kg & -0.138 & 0.631 & -0.091 & 1.178 \\
+jaundice\_level & -0.086 & -0.332 & 0.020 & 1.161 \\
+head\_circum. & 0.515 & 0.014 & -0.451 & 1.146 \\
+age\_days & 0.114 & 0.415 & -0.003 & 1.127 \\
+apgar\_score & 0.094 & 0.071 & -0.183 & 1.084 \\
+gestational\_age & -0.021 & 0.125 & -0.144 & 1.038 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Fase I: Aprendizaje No Supervisado con DBSCAN}
+
+\subsubsection{Fundamentos del Algoritmo DBSCAN}
+
+Se aplicó el algoritmo  \emph{DBSCAN} (Density-Based Spatial Clustering of Applications with Noise) \cite{domino2023,altaei2023} para identificar estructuras naturales en los datos sin especificar previamente el número de grupos. DBSCAN define clústeres como regiones de alta densidad separadas por áreas de baja densidad, lo que le permite descubrir grupos de formas arbitrarias y manejar eficazmente el ruido en los datos.
+
+A diferencia de algoritmos basados en centroides como K-Means, DBSCAN no asigna forzosamente cada punto a un clúster, sino que identifica puntos atípicos como ruido. Esta característica es particularmente valiosa en contextos médicos donde las observaciones anómalas no deben influir en la definición de los grupos principales \cite{arcgis2023}.
+
+\subsubsection{Definiciones Formales}
+
+Para un punto $p_i$ en el conjunto de datos $D$, el conjunto de vecinos $\mathcal{N}_\epsilon(p_i)$ se define como:
+\[
+\mathcal{N}_\epsilon(p_i) = \{ p_j \in D \mid \text{dist}(p_i, p_j) \leq \epsilon \}
+\]
+donde $\epsilon$ es el radio máximo de vecindad y $\text{dist}(p_i, p_j)$ representa la distancia euclídea entre los puntos $p_i$ y $p_j$.
+
+ \emph{DBSCAN} clasifica los puntos en tres categorías:
+\begin{itemize}
+    \item \textbf{Puntos núcleo (core points)}: Un punto $p_i$ es núcleo si $|\mathcal{N}_\epsilon(p_i)| \geq \text{minPts}$, es decir, si su vecindad contiene al menos \textit{minPts} puntos. Estos puntos forman la base de los clústeres y satisfacen un umbral mínimo de densidad.
+
+    \item \textbf{Puntos frontera (border points)}: Un punto $q$ es frontera si $|\mathcal{N}_\epsilon(q)| < \text{minPts}$ pero es alcanzable desde algún punto núcleo. Estos puntos pertenecen al clúster pero se encuentran en sus límites.
+
+    \item \textbf{Puntos de ruido (noise/outliers)}: Puntos que no son núcleo ni frontera, representando observaciones atípicas o aisladas.
+\end{itemize}
+
+Los clústeres se forman expandiendo desde puntos núcleo, conectando puntos núcleo adyacentes mediante el concepto de \textit{densidad-alcanzable} (density-reachable): un punto $r$ es densidad-alcanzable desde $p$ si existe una cadena de puntos núcleo que conecta $p$ con $r$ a través de vecindades consecutivas.
+
+\subsubsection{Optimización de Parámetros}
+
+Los parámetros $\epsilon$ y \textit{minPts} se determinaron mediante el método del \textbf{k-distance graph}. Este método consiste en:
+\begin{enumerate}
+    \item Calcular para cada punto la distancia a su k-ésimo vecino más cercano
+    \item Ordenar estas distancias en orden descendente
+    \item Graficar las distancias ordenadas e identificar el ``codo'' o punto de inflexión
+\end{enumerate}
+
+El punto de inflexión indica el valor óptimo de $\epsilon$. En nuestro análisis, se utilizó $k=10$ y se identificó el percentil 95 de las distancias, obteniendo $\epsilon_{\text{sugerido}} = 2.4491$.
+
+\subsubsection{Diseño de Experimentos para DBSCAN}
+
+Se implementó un diseño factorial completo evaluando diferentes combinaciones de hiperparámetros (Tabla \ref{tab:dbscan_design}):
+
+\begin{table}[H]
+\centering
+\captionsetup{name=Tabla}
+\caption{Factores y Niveles para DBSCAN}
+\label{tab:dbscan_design}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Factor} & \textbf{Niveles} \\
+\midrule
+$\epsilon$ (eps) & 1.959, 2.449, 2.939 \\
+minPts (min\_samples) & 5, 10, 15 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Esto resulta en 9 configuraciones experimentales. Se evaluaron mediante las métricas descritas a continuación.
+
+\subsubsection{Métricas de Evaluación del Clustering}
+
+La calidad del agrupamiento se evaluó mediante tres métricas complementarias:
+
+\textbf{Coeficiente de Silhouette (S)} \cite{analyticslane2023silhouette}: Cuantifica la relación entre la separación de diferentes clústeres y la similitud entre puntos de un mismo clúster. Para cada punto $i$:
+\[
+S(i) = \frac{b(i) - a(i)}{\max\{a(i), b(i)\}}
+\]
+donde $a(i)$ es la distancia promedio intra-clúster y $b(i)$ es la distancia promedio al clúster más cercano. Valores en $[-1, 1]$; más cercano a 1 es mejor.
+
+\textbf{Índice de Davies-Bouldin (DBI)} \cite{towardsdatascience2020}: Evalúa la similitud promedio entre cada clúster y su clúster más similar. Valores más bajos indican mejor separación.
+
+\textbf{Índice de Calinski-Harabasz (CHI)} \cite{analyticslane2023calinski}: Mide el cociente entre la dispersión entre clústeres y la dispersión dentro de los clústeres. Valores más altos son preferibles.
+
+\subsection{Fase II: Aprendizaje Supervisado con Random Forest}
+
+\subsubsection{Fundamentos de Random Forest}
+
+ \emph{Random Forest} \cite{breiman2001random,adiwijaya2014random} es un método de ensamble que construye múltiples árboles de decisión durante el entrenamiento y combina sus predicciones mediante votación mayoritaria. El algoritmo introduce aleatoriedad de dos maneras:
+
+\begin{enumerate}
+    \item \textbf{Muestreo aleatorio de datos (Bootstrap)}: Para cada árbol, se genera una muestra bootstrap mediante muestreo con reemplazo
+    \item \textbf{Selección aleatoria de características}: En cada nodo, se seleccionan aleatoriamente $m$ variables de las $M$ totales (típicamente $m = \sqrt{M}$)
+\end{enumerate}
+
+\subsubsection{Ventajas para Datos Clínicos}
+
+Random Forest presenta características particularmente valiosas para el análisis de datos neonatales:
+\begin{itemize}
+    \item Robustez ante outliers mediante votación por mayoría
+    \item Manejo eficiente de alta dimensionalidad
+    \item Estimación automática de importancia de variables
+    \item Reducción de sobreajuste mediante agregación de árboles diversos
+    \item Estimación de error no sesgada usando datos Out-of-Bag (OOB)
+\end{itemize}
+
+\subsubsection{Diseño de Experimentos para Random Forest}
+
+Se implementó un diseño experimental evaluando combinaciones de hiperparámetros mediante validación cruzada estratificada (Tabla \ref{tab:rf_design}).
+
+\begin{table}[H]
+\centering
+\captionsetup{name=Tabla}
+\caption{Factores y Niveles para Random Forest}
+\label{tab:rf_design}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Factor} & \textbf{Niveles} \\
+\midrule
+n\_estimators & 100, 200, 300 \\
+max\_depth & 5, 10, 15, None \\
+min\_samples\_split & 2, 5, 10 \\
+min\_samples\_leaf & 1, 2, 4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+De las 108 combinaciones posibles, se evaluaron 20 configuraciones seleccionadas aleatoriamente para reducir el costo computacional, manteniendo representatividad del espacio de hiperparámetros.
+
+\subsubsection{Validación Cruzada}
+
+Se implementó \textbf{validación cruzada estratificada} con $k=5$ pliegues (\texttt{StratifiedKFold}) para:
+\begin{itemize}
+    \item Mantener la proporción de clases en cada fold
+    \item Obtener estimaciones robustas del rendimiento
+    \item Evitar sesgos por división aleatoria única
+\end{itemize}
+
+La métrica de evaluación principal fue el \textbf{F1-Score ponderado} (\texttt{f1\_weighted}), que considera el desbalance de clases.
+
+\subsubsection{Preparación de Datos}
+
+El conjunto de datos se dividió mediante la función \texttt{train\_test\_split}:
+\begin{itemize}
+    \item \textbf{Conjunto de entrenamiento}: 80\% ($n=2400$)
+    \item \textbf{Conjunto de prueba}: 20\% ($n=600$)
+    \item Muestreo aleatorio estratificado para mantener proporciones de clases
+\end{itemize}
+
+\subsubsection{Métricas de Evaluación del Clasificador}
+
+Se calcularon métricas basadas en la matriz de confusión:
+\subsubsection{Métricas de Evaluación del Clasificador}
+
+Se calcularon métricas basadas en la matriz de confusión:
+
+\textbf{Matriz de Confusión}: Tabla que visualiza el rendimiento del clasificador mostrando las predicciones correctas e incorrectas por clase. Para clasificación binaria, la matriz contiene:
+\begin{itemize}
+    \item \textit{Verdaderos Positivos (TP)}: Casos positivos correctamente clasificados
+    \item \textit{Verdaderos Negativos (TN)}: Casos negativos correctamente clasificados
+    \item \textit{Falsos Positivos (FP)}: Casos negativos incorrectamente clasificados como positivos (Error Tipo I)
+    \item \textit{Falsos Negativos (FN)}: Casos positivos incorrectamente clasificados como negativos (Error Tipo II)
+\end{itemize}
+
+\textbf{Exactitud (Accuracy)}: Proporción de clasificaciones correctas sobre el total:
+\[
+\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}
+\]
+La exactitud es útil cuando las clases están balanceadas, pero puede ser engañosa en conjuntos de datos desbalanceados.
+
+\textbf{Precisión (Precision)}: Proporción de predicciones positivas que son correctas:
+\[
+\text{Precision} = \frac{TP}{TP + FP}
+\]
+La precisión mide qué tan confiables son las predicciones positivas del modelo. Es crucial cuando el costo de los falsos positivos es alto.
+
+\textbf{Sensibilidad o Exhaustividad (Recall)}: Proporción de casos positivos reales correctamente identificados:
+\[
+\text{Recall} = \frac{TP}{TP + FN}
+\]
+El recall mide la capacidad del modelo para encontrar todos los casos positivos. Es fundamental cuando el costo de los falsos negativos es alto (por ejemplo, no detectar un bebé en riesgo).
+
+\textbf{Puntuación F1 (F1-Score)}: Media armónica entre precisión y recall:
+\begin{align*}
+\text{F1} &= 2 \times \frac{\text{Prec.} \times \text{Rec.}}{\text{Prec.} + \text{Rec.}} \\
+&= \frac{2 \times TP}{2 \times TP + FP + FN}
+\end{align*}
+El F1-Score proporciona una medida equilibrada que considera tanto falsos positivos como falsos negativos.
+
+\textbf{Importancia de Variables}: Random Forest calcula automáticamente la importancia mediante la \textit{reducción promedio de impureza de Gini}. Esta métrica se calcula como:
+\[
+\text{Imp}(X_j) = \frac{1}{N_{\text{trees}}} \sum_{t=1}^{N_{\text{trees}}} \sum_{n} I(n|X_j) \times \Delta i(n)
+\]
+donde $\Delta i(n)$ es la reducción de impureza en el nodo $n$. Variables con mayor importancia contribuyen más a la reducción de impureza y son más relevantes para la clasificación. Esta información permite identificar qué características clínicas son más determinantes para predecir el nivel de riesgo neonatal.
+
+\subsection{Integración de Enfoques}
+
+La combinación de análisis no supervisado (DBSCAN) y supervisado (Random Forest) proporciona:
+\begin{enumerate}
+    \item Revelación de estructura natural de los datos sin información de etiquetas
+    \item Construcción de modelo predictivo robusto con etiquetas conocidas
+    \item Validación cruzada entre patrones naturales y categorías clínicas
+    \item Cuantificación de importancia de variables clínicas
+\end{enumerate}
+
+\section{Resultados}
+
+\subsection{Resultados del Clustering \emph{DBSCAN}}
+
+\subsubsection{Evaluación de Configuraciones}
+
+La Tabla \ref{tab:dbscan_results} presenta los resultados del diseño experimental para \emph{DBSCAN}. Se evaluaron 9 configuraciones variando $\epsilon$ y minPts.
+
+\begin{table}[H]
+\centering
+\captionsetup{name=Tabla}
+\caption{Resultados del Diseño Experimental \emph{DBSCAN}}
+\label{tab:dbscan_results}
+\scriptsize 
+\begin{tabular}{@{}cccccc@{}}
+\toprule
+$\epsilon$ & \textbf{minPts} & \textbf{Clusters} & \textbf{Ruido (\%)} & \textbf{Silhouette} & \textbf{DBI} \\
+\midrule
+1.959 & 5 & 11 & 2.63 & -0.066 & 1.173 \\
+1.959 & 10 & 9 & 7.50 & -0.046 & 1.198 \\
+1.959 & 15 & 8 & 14.80 & -0.062 & 1.163 \\
+\midrule
+\textbf{2.449} & \textbf{5} & \textbf{2} & \textbf{0.20} & \textbf{0.193} & \textbf{1.185} \\
+2.449 & 10 & 2 & 0.53 & 0.186 & 1.146 \\
+2.449 & 15 & 2 & 0.90 & 0.181 & 1.117 \\
+\midrule
+2.939 & 5 & 1 & 0.00 & --- & --- \\
+2.939 & 10 & 1 & 0.00 & --- & --- \\
+2.939 & 15 & 1 & 0.00 & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Observaciones clave}:
+\begin{itemize}
+    \item Con $\epsilon$ muy pequeño (1.959), se identifican muchos clusters pequeños con alto porcentaje de ruido y Silhouette negativo
+    \item Con $\epsilon$ muy grande (2.939), todos los puntos se fusionan en un solo cluster
+    \item La configuración óptima fue $\epsilon = \text{2.449}$y minPts $= 5$, balanceando número de clusters, bajo ruido y mejor Silhouette
+\end{itemize}
+
+\subsubsection{Configuración Óptima \emph{DBSCAN}}
+
+La mejor configuración identificó:
+\begin{itemize}
+    \item \textbf{Número de clusters}: 2 grupos principales
+    \item \textbf{Puntos de ruido}: 6 observaciones (0.20\%)
+    \item \textbf{Coeficiente de Silhouette}: 0.193
+    \item \textbf{Índice Davies-Bouldin}: 1.185
+    \item \textbf{Normalized Mutual Information (NMI)}: 0.0002
+\end{itemize}
+
+Los valores bajos de NMI indican que los clusters identificados por \emph{DBSCAN} no se alinean fuertemente con las etiquetas de riesgo clínicamente definidas. Esto sugiere que:
+\begin{enumerate}
+    \item Los patrones de densidad en el espacio de características no coinciden directamente con la dicotomía ``At Risk'' vs. ``Healthy''
+    \item Pueden existir subgrupos fisiológicos que trascienden la clasificación binaria de riesgo
+    \item Se requieren métodos supervisados para capturar mejor la relación entre variables y riesgo
+\end{enumerate}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.50\textwidth,  height=0.30\textheight]{kdistance_graph.png}
+\caption{K-distance Graph para $k=10$, mostrando el codo en percentil 95 ($\epsilon = \text{2.449}$)}
+\label{fig:kdistance}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.50\textwidth,  height=0.30\textheight]{clustering_comparison.png} 
+\caption{Comparación visual de clusters \emph{DBSCAN} (izquierda) con niveles de riesgo verdaderos (derecha) proyectados en PC1-PC2}
+\label{fig:clusters_comparison}
+\end{figure}
+
+\subsection{Resultados de Clasificación \emph{Random Forest}}
+
+\subsubsection{Optimización de Hiperparámetros}
+
+La Tabla \ref{tab:rf_optimization} presenta las 10 mejores configuraciones del diseño experimental.
+
+\begin{table}[H]
+\centering
+\captionsetup{name=Tabla}
+\caption{Top 10 Configuraciones  \emph{Random Forest} (F1-Score CV)}
+\label{tab:rf_optimization}
+\scriptsize
+\begin{tabular}{@{}cccccc@{}}
+\toprule
+\textbf{Rank} & \textbf{n\_est} & \textbf{max\_d} & \textbf{min\_split} & \textbf{min\_leaf} & \textbf{F1-CV} \\
+\midrule
+1 & 100 & 15 & 2 & 1 & 0.8890 \\
+2 & 100 & 10 & 2 & 2 & 0.8889 \\
+3 & 200 & None & 10 & 1 & 0.8887 \\
+4 & 300 & None & 10 & 2 & 0.8884 \\
+5 & 200 & None & 5 & 2 & 0.8880 \\
+6 & 200 & 10 & 2 & 1 & 0.8878 \\
+7 & 300 & 10 & 2 & 1 & 0.8875 \\
+8 & 100 & None & 5 & 1 & 0.8870 \\
+9 & 100 & 10 & 2 & 4 & 0.8868 \\
+10 & 200 & 15 & 10 & 4 & 0.8866 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La configuración óptima seleccionada fue:
+\begin{itemize}
+    \item \texttt{n\_estimators} $= 100$
+    \item \texttt{max\_depth} $= 15$
+    \item \texttt{min\_samples\_split} $= 2$
+    \item \texttt{min\_samples\_leaf} $= 1$
+    \item \textbf{F1-Score (CV)} $= \text{0.8890}$
+\end{itemize}
+
+\subsubsection{Rendimiento en Conjunto de Prueba}
+
+El modelo optimizado fue entrenado en el conjunto de entrenamiento completo ($n=2400$) y evaluado en el conjunto de prueba ($n=600$). Los resultados se presentan en la Tabla \ref{tab:rf_performance}.
+
+\begin{table}[H]
+\centering
+\captionsetup{name=Tabla}
+\caption{Reporte de Clasificación por Clase}
+\label{tab:rf_class_metrics}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Clase} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} & \textbf{Sop.} \\
+\midrule
+En Riesgo & 0.74 & 0.44 & 0.55 & 80 \\
+Saludable & 0.92 & 0.98 & 0.95 & 520 \\
+\midrule
+\textbf{Accuracy} & & & \textbf{0.91} & \textbf{600} \\
+Macro Avg & 0.83 & 0.71 & 0.75 & 600 \\
+Weighted Avg & 0.90 & 0.91 & 0.89 & 600 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Análisis por Clase}
+
+La Tabla \ref{tab:rf_class_metrics} desagrega el rendimiento por categoría de riesgo.
+
+\begin{table}[H]
+\centering
+\captionsetup{name=Tabla}
+\caption{Reporte de Clasificación por Clase}
+\label{tab:rf_class_metrics}
+\scriptsize
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Clase} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{Soporte} \\
+\midrule
+En Riesgo & 0.74 & 0.44 & 0.55 & 80 \\
+Saludable & 0.92 & 0.98 & 0.95 & 520 \\
+\midrule
+\textbf{Accuracy} & & & \textbf{0.91} & \textbf{600} \\
+Macro Avg & 0.83 & 0.71 & 0.75 & 600 \\
+Weighted Avg & 0.90 & 0.91 & 0.89 & 600 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Interpretación}:
+\begin{itemize}
+    \item El modelo tiene excelente desempeño en la clase mayoritaria ``Saludable'' (F1=0.95, Recall=0.98)
+    \item La clase ``En Riesgo'' muestra precisión aceptable (0.74) pero recall bajo (0.44)
+    \item El bajo recall para ``En Riesgo'' implica que el modelo no detecta 56\% de los casos de riesgo (falsos negativos)
+    \item Esto es crítico en contexto clínico, donde no detectar un bebé en riesgo tiene consecuencias graves
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.50\textwidth]{matriz_confusion.png}
+\caption{Matriz de confusión del modelo  \emph{Random Forest} optimizado}
+\label{fig:confusion_matrix}
+\end{figure}
+
+\subsubsection{Importancia de Variables}
+
+El análisis de importancia de Gini identificó los predictores más determinantes (Tabla \ref{tab:feature_importance}).
+
+\begin{table}[H]
+\centering
+\captionsetup{name=Tabla}
+\captionsetup{name=Tabla}
+\caption{Top 10 Variables Más Importantes (Gini)}
+\label{tab:feature_importance}
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{Variable} & \textbf{Importancia} \\
+\midrule
+age\_days & 0.2200 \\
+heart\_rate\_bpm & 0.1556 \\
+jaundice\_level\_mg\_dl & 0.0914 \\
+weight\_kg & 0.0696 \\
+length\_cm & 0.0559 \\
+head\_circumference\_cm & 0.0471 \\
+respiratory\_rate\_bpm & 0.0453 \\
+birth\_weight\_kg & 0.0439 \\
+temperature\_c & 0.0403 \\
+birth\_length\_cm & 0.0366 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Hallazgos destacados}:
+\begin{itemize}
+    \item \textbf{age\_days} (22.0\%) es el predictor más importante, capturando la evolución temporal del estado neonatal
+    \item \textbf{heart\_rate\_bpm} (15.6\%) es el signo vital más determinante
+    \item \textbf{jaundice\_level\_mg\_dl} (9.1\%) refleja la importancia de la hiperbilirrubinemia como indicador de riesgo
+    \item Variables antropométricas (peso, talla, circunferencia cefálica) también contribuyen significativamente
+\end{itemize}
+
+Sorprendentemente, \texttt{apgar\_score} no aparece en el top 10, sugiriendo que fue excluida en el preprocesamiento o que su poder predictivo es capturado por otras variables correlacionadas.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{Features.png}
+\caption{Importancia relativa de las 10 variables más determinantes}
+\label{fig:feature_importance}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.50\textwidth,  height=0.20\textheight]{metricas.png}
+\caption{Comparación visual de métricas de desempeño}
+\label{fig:metrics_comparison}
+\end{figure}
+
+\section{Discusión}
+
+\subsection{Interpretación de Resultados de Clustering}
+
+Los resultados de \emph{DBSCAN} revelaron una estructura de agrupamiento simple (2 clusters) con muy bajo porcentaje de ruido (0.20\%). Sin embargo, el coeficiente de Silhouette modesto (0.193) y los valores muy bajos de NMI (0.0002) indican que:
+
+\begin{enumerate}
+    \item \textbf{Los patrones de densidad no reflejan la clasificación clínica de riesgo}. Los clusters identificados por similitud fisiológica multivariada no corresponden con la dicotomía ``At Risk''/``Healthy''. Esto sugiere que la evaluación clínica de riesgo integra información adicional no capturada en las 12 variables seleccionadas para clustering, o que utiliza reglas de decisión no basadas en densidad espacial.
+    
+    \item \textbf{Limitaciones del PCA para visualización}. Con solo 25.73\% de varianza explicada por PC1-PC2, las proyecciones bidimensionales pierden información estructural importante. Los clusters pueden estar mejor separados en el espacio completo de 12 dimensiones.
+    
+    \item \textbf{Transición gradual entre estados de salud}. La ausencia de grupos bien definidos podría reflejar que el riesgo neonatal es un espectro continuo más que categorías discretas, lo cual tiene implicaciones para la práctica clínica.
+\end{enumerate}
+
+A pesar de la baja concordancia con etiquetas, \emph{DBSCAN} cumplió su objetivo exploratorio: confirmar que no existen subpoblaciones naturales fuertemente separadas, validando así la necesidad de métodos supervisados.
+
+\subsection{Interpretación de Resultados de Random Forest}
+
+El modelo \emph{Random Forest} alcanzó una exactitud global notable (90.5\%), pero el análisis por clase revela una limitación crítica: \textbf{el recall para la clase ``En Riesgo'' es solo 0.44}, implicando que más de la mitad de los casos de riesgo no son detectados (falsos negativos). Este desbalance en el desempeño se atribuye principalmente a dos factores: el marcado \textbf{desbalance de clases}  que sesga al modelo hacia la clase mayoritaria a pesar de los mecanismos de compensación de \emph{Random Forest}, y el \textbf{solapamiento de características} donde muchos neonatos en riesgo presentan perfiles fisiológicos indistinguibles de los saludables, particularmente en etapas tempranas o cuando los factores de riesgo son sutiles.
+
+\textbf{Implicaciones clínicas}: En un sistema de apoyo a decisiones clínicas, un recall de 0.44 para casos de riesgo es \textit{inaceptable}. No detectar un bebé en riesgo puede resultar en intervenciones tardías con consecuencias adversas. Se requiere rebalanceo (ajuste de pesos de clase) o ajuste de umbral de decisión para priorizar sensibilidad sobre precisión.
+
+\subsection{Variables Determinantes}
+
+El ranking de importancia de variables proporciona insights valiosos:
+
+\begin{itemize}
+    \item \textbf{age\_days} como predictor dominante sugiere que el riesgo neonatal tiene una fuerte componente temporal. Los primeros días de vida son críticos, y el modelo captura patrones de evolución que diferencian trayectorias saludables de riesgosas.
+    
+    \item \textbf{heart\_rate\_bpm} y \textbf{respiratory\_rate\_bpm} confirman que los signos vitales son indicadores sensibles del estado fisiológico.
+    
+    \item La prominencia de \textbf{jaundice\_level\_mg\_dl} valida la importancia clínica de la hiperbilirrubinemia, un factor de riesgo bien documentado para kernicterus y daño neurológico.
+    
+    \item Las variables antropométricas reflejan la madurez y estado nutricional, factores protectores contra complicaciones.
+\end{itemize}
+
+Estos hallazgos son consistentes con la literatura médica y refuerzan la validez del modelo a pesar de sus limitaciones.
+
+
+\section{Conclusiones}
+
+Este trabajo demostró con éxito la aplicación de un enfoque dual de aprendizaje automático, combinando DBSCAN y Random Forest, para identificar y predecir patrones de riesgo en salud neonatal.
+
+El análisis reveló que \textbf{los datos neonatales no presentan estructuras de clustering naturales fuertemente definidas}. \emph{DBSCAN} identificó solo 2 grupos con baja correspondencia con categorías clínicas de riesgo (NMI=0.0002), sugiriendo que el riesgo neonatal es un fenómeno complejo no reducible a agrupaciones basadas en densidad espacial. Esta ausencia de clusters bien diferenciados confirma que el enfoque no supervisado tiene principalmente valor exploratorio, validando que no existen subgrupos ocultos obvios, pero no puede reemplazar la clasificación supervisada para predicción clínica.
+
+A pesar de esta complejidad estructural, \textbf{fue posible construir un modelo predictivo con exactitud global alta (90.5\%)} usando \emph{Random Forest}, aunque el desempeño resultó \textit{asimétrico}: excelente para casos saludables (F1=0.95) pero limitado para casos en riesgo (F1=0.55, Recall=0.44). Este patrón de desempeño refleja tanto el desbalance inherente en los datos como la dificultad de distinguir casos de riesgo con perfiles fisiológicos sutiles.
+
+El análisis de importancia de variables reveló que \textbf{los factores más determinantes para la predicción son} la \textit{edad en días} (22\%), la \textit{frecuencia cardíaca} (15.6\%), y el \textit{nivel de ictericia} (9.1\%). La dominancia de \texttt{age\_days} indica que la dimensión temporal es crítica para evaluar riesgo neonatal, capturando la evolución dinámica del estado de salud durante los primeros días de vida.
+
+Por otro lado, \textbf{el PCA reveló la alta dimensionalidad intrínseca} de los datos neonatales: se requieren 9 componentes para capturar el 70\% de varianza, sin un factor dominante único. Esto confirma que la salud neonatal es un fenómeno multifacético que integra múltiples dominios fisiológicos y no puede reducirse a pocas variables compuestas, subrayando la necesidad de enfoques analíticos que respeten esta complejidad inherente.
+
+El modelo resultante, aunque requiere mejoras para uso clínico, demuestra el potencial del machine learning para apoyar la toma de decisiones en medicina neonatal, proporcionando herramientas cuantitativas para la estratificación de riesgo y priorización de recursos.
+
+\bibliographystyle{abbrvnat}
+\begin{thebibliography}{99}
+
+\bibitem{helman2025}
+Helman SM, Riek NT, Sereika SM, Tafti AP, Olsen R, Gaynor JW, Lisanti AJ, Al-Zaiti SS.
+\emph{Exploring Novel Data-Driven Clustering Methods for Uncovering Patterns in Longitudinal Neonatal Postoperative Temperature Measurements.}
+Mayo Clinic Proceedings: Digital Health (2025).
+doi: \url{https://doi.org/10.1016/j.mcpdig.2025.100270}.
+
+\bibitem{thelancet2020}
+Pavel, A. M., et al.
+\emph{A machine-learning algorithm for neonatal seizure recognition: a multicentre, randomised, controlled trial.}
+The Lancet Child \& Adolescent Health, 4(10), 740–749 (2020).
+
+\bibitem{macbean2018}
+MacBean, V., Lunt, A., Drysdale, S.B., et al.
+\emph{Predicting healthcare outcomes in prematurely born infants using cluster analysis.}
+Pediatric Pulmonology, 53(8), 1067–1072 (2018).
+
+\bibitem{breiman2001random}
+Breiman, L. (2001).
+\emph{Random Forests.}
+Machine Learning, 45(1), 5–32.
+
+\bibitem{adiwijaya2014random}
+Adiwijaya, et al. (2014).
+\emph{Random Forest Classifiers: A Survey and Future Research Directions.}
+Telkom University Technical Report.
+
+\bibitem{analyticslane2023silhouette}
+Analytics Lane (2023).
+\emph{Número óptimo de clústeres con Silhouette e implementación en Python.}
+Disponible en: \texttt{https://www.analyticslane.com/2023/06/23/numero-optimo-de-clusteres-con-silhouette-e-implementacion-en-python/}
+
+\bibitem{towardsdatascience2020}
+Towards Data Science (2020).
+\emph{Davies-Bouldin Index for K-Means Clustering Evaluation in Python.}
+Disponible en: \texttt{https://towardsdatascience.com/davies-bouldin-index-for-k-means-clustering-evaluation-in-python-57f66da15cd/}
+
+\bibitem{analyticslane2023calinski}
+Analytics Lane (2023).
+\emph{Identificar el número de clústeres con Calinski-Harabasz en K-Means e implementación en Python.}
+Disponible en: \texttt{https://www.analyticslane.com/2023/06/16/identificar-el-numero-de-clusteres-con-calinski-harabasz-en-k-means-e-implementacion-en-python/}
+
+\bibitem{domino2023}
+Domino Data Lab.
+\emph{Topology and Density-Based Clustering.}
+Disponible en: \texttt{https://domino.ai/blog/topology-and-density-based-clustering}
+
+\bibitem{altaei2023}
+Altaei, R. (2023).
+\emph{Understand the Math Behind DBSCAN.}
+Medium.
+Disponible en: \texttt{https://raghda-altaei.medium.com/understand-the-math-behind-dbscan-ae51672c0424}
+
+\bibitem{arcgis2023}
+Esri. (2023).
+\emph{How Density-Based Clustering Works.}
+ArcGIS Pro Documentation.
+Disponible en: \texttt{https://pro.arcgis.com/es/pro-app/3.3/tool-reference/spatial-statistics/how-density-based-clustering-works.htm}
+
+\bibitem{themachinelearners2023}
+The Machine Learners (2023).
+\emph{Métricas de Clasificación en Machine Learning.}
+Disponible en: \texttt{https://www.themachinelearners.com/metricas-de-clasificacion/}
+
+\bibitem{adgeo2018}
+Arana-Díaz, L., et al. (2018).
+\emph{Format for scientific reports.}
+Advances in Geosciences, 45, 377–384.
+doi:10.5194/adgeo-45-377-2018.
+
+\end{thebibliography}
+
+\end{document}
