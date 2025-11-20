@@ -11,3 +11,5 @@
 - [Tarea 6](https://github.com/JoshuneArriaga/Apendizaje_Automatico/blob/main/Tarea_6.ipynb)
 - [Tarea 7](https://github.com/JoshuneArriaga/Apendizaje_Automatico/blob/main/Tarea_7.pdf)
 - [Tarea 8/9](https://github.com/JoshuneArriaga/Apendizaje_Automatico/blob/main/Tarea_8_9.ipynb)
+- [PIA (PDF)](https://github.com/JoshuneArriaga/Apendizaje_Automatico/blob/main/PIA_1853668.pdf)
+- [PIA (LaTeX)](https://github.com/JoshuneArriaga/Apendizaje_Automatico/blob/main/PIA_1853668.tex)
